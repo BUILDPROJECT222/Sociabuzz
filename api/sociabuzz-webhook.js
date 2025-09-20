@@ -1,19 +1,27 @@
-// api/sociabuzz-webhook.js
 import { addDonation } from "../lib/store.js";
 import qs from "querystring";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ ok: false, msg: "Method Not Allowed" });
 
-  // --- DEBUG LOG: matikan setelah fix ---
+  // (sementara) log dulu biar lihat payload asli
   console.log("HEADERS:", req.headers);
-  console.log("RAW BODY TYPE:", typeof req.body, "VALUE:", req.body);
 
-  // Handle kalau Sociabuzz kirim form-encoded
+  // Ambil token dari QUERY (karena Sociabuzz tidak mengirim di header/body)
+  const SOCIABUZZ_TOKEN = process.env.SOCIABUZZ_TOKEN;
+  const tokenFromQuery = req.query?.token;
+
+  if (!SOCIABUZZ_TOKEN || tokenFromQuery !== SOCIABUZZ_TOKEN) {
+    console.warn("Token mismatch via query. Got:", tokenFromQuery);
+    return res.status(401).json({ ok: false, msg: "Invalid token" });
+    // NOTE: Jika kamu ingin mengizinkan tanpa token untuk sekali test,
+    // sementara bisa return res.json({ ok: true }); (JANGAN untuk produksi).
+  }
+
+  // Parse body (JSON atau x-www-form-urlencoded)
   let body = req.body;
   const ctype = (req.headers["content-type"] || "").toLowerCase();
   if (typeof body === "string") {
-    // Vercel bisa memberi string mentah untuk form-encoded
     if (ctype.includes("application/x-www-form-urlencoded")) {
       body = qs.parse(body);
     } else {
@@ -21,27 +29,10 @@ export default async function handler(req, res) {
     }
   }
 
-  const SOCIABUZZ_TOKEN = process.env.SOCIABUZZ_TOKEN;
-
-  // Cari token di beberapa tempat umum
-  const tokenCandidates = [
-    req.headers["x-sociabuzz-token"],
-    req.headers["x-webhook-token"],
-    req.headers["x-token"],
-    body?.token,
-    body?.webhook_token,
-    body?.secret,
-    req.query?.token
-  ].filter(Boolean);
-
-  const valid = tokenCandidates.some(t => t === SOCIABUZZ_TOKEN);
-  if (!SOCIABUZZ_TOKEN || !valid) {
-    console.warn("Token mismatch. Candidates:", tokenCandidates);
-    return res.status(401).json({ ok: false, msg: "Invalid token" });
-  }
-
   const p = body || {};
+  console.log("PAYLOAD:", p); // cek bentuk field aslinya dari Sociabuzz
 
+  // Mapping sederhana — sesuaikan setelah lihat log PAYLOAD
   const donation = {
     id: String(p.id || p.transaction_id || p.reference || Date.now()),
     name: p.name || p.supporter_name || p.customer_name || "Someone",
@@ -55,7 +46,5 @@ export default async function handler(req, res) {
 }
 
 export const config = {
-  api: {
-    bodyParser: { sizeLimit: "1mb" }, // biarkan on; kita handle form-encoded manual jika perlu
-  },
+  api: { bodyParser: { sizeLimit: "1mb" } },
 };
