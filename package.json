@@ -2,17 +2,8 @@
   "name": "sociabuzz-backend",
   "version": "1.0.0",
   "type": "module",
-  "description": "",
-  "main": "index.js",
-  "license": "ISC",
-  "scripts": {
-    "build": "echo \"no build\"",
-    "start": "node api/sociabuzz-webhook.js"
-  },
   "dependencies": {
     "@upstash/redis": "^1.35.4"
   },
-  "engines": {
-    "node": ">=18"
-  }
+  "engines": { "node": ">=18" }
 }
