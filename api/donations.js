@@ -1,4 +1,3 @@
-// ganti store.js -> store-redis.js
 import { getSince } from "../lib/store-redis.js";
 
 export default async function handler(req, res) {
