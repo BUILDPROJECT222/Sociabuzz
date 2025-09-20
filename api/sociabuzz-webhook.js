@@ -1,4 +1,4 @@
-import { addDonation } from "../lib/store.js";
+import { addDonation } from "../lib/store-redis.js";
 import qs from "querystring";
 
 export default async function handler(req, res) {
