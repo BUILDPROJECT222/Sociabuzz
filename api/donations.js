@@ -1,4 +1,4 @@
-import { getSince } from "../lib/store.js";
+import { getSince } from "../lib/store-redis.js";
 
 export default async function handler(req, res) {
   if (req.method !== "GET") return res.status(405).json({ ok: false, msg: "Method Not Allowed" });
